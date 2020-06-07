@@ -1,0 +1,18 @@
+[package]
+name = "ina3221"
+description = "INA3221 tripple current/power monitor driver"
+version = "0.1.0"
+repository = "https://github.com/Atmelfan/ina3221-rs"
+authors = ["Atmelfan <gustavp@gpa-robotics.com>"]
+license = "MIT/Apache-2.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+byteorder = {version = "1.2.1", default-features = false}
+embedded-hal = "0.2"
+
+[dev-dependencies]
+linux-embedded-hal = "0.2"
+embedded-hal-mock = "0.4"
