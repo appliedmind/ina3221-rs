@@ -219,7 +219,7 @@ pub struct INA3221<I2C> {
 /// Note: Raw values, see datasheet for conversion
 pub struct Channel {
     /// Bus voltage
-    voltage: u16,
+    bus_voltage: u16,
     /// Shunt voltage
     shunt_voltage: i16
 }
@@ -234,7 +234,7 @@ impl Channel {
     /// Convert raw bus-voltage
     pub fn voltage(&self) -> f32 {
         // 8mV / LSB
-        (self.voltage >> 3) as f32 * 8e-3f32
+        (self.bus_voltage >> 3) as f32 * 8e-3f32
     }
 }
 
@@ -262,28 +262,28 @@ impl<I2C, E> INA3221<I2C>
     /// Read a channel's bus and shunt voltage
     pub fn read_channel(&mut self, index: u8) -> Result<Channel, E> {
         let mut buf: [u8; 4] = [0x00; 4];
-        self.i2c.write(self.address, &[Register::BusVoltage1 as u8 + (index % 3u8)*2u8])?;
+        self.i2c.write(self.address, &[Register::ShuntVoltage1 as u8 + (index % 3u8)*2u8])?;
         self.i2c.read(self.address, &mut buf)?;
         Ok(Channel {
-            voltage: BigEndian::read_u16(&buf[0..=1]),
-            shunt_voltage: BigEndian::read_i16(&buf[2..=3])
+            shunt_voltage: BigEndian::read_i16(&buf[0..=1]),
+            bus_voltage: BigEndian::read_u16(&buf[2..=3])
         })
     }
 
     /// Read channel 1-3
     pub fn read_all_channels(&mut self) -> Result<[Channel; 3], E> {
         let mut buf: [u8; 4*3] = [0x00; 4*3];
-        self.i2c.write(self.address, &[Register::BusVoltage1 as u8])?;
+        self.i2c.write(self.address, &[Register::ShuntVoltage1 as u8])?;
         self.i2c.read(self.address, &mut buf)?;
         Ok([Channel {
-            voltage: BigEndian::read_u16(&buf[0..=1]),
-            shunt_voltage: BigEndian::read_i16(&buf[2..=3])
+            shunt_voltage: BigEndian::read_i16(&buf[0..=1]),
+            bus_voltage: BigEndian::read_u16(&buf[2..=3])
         },Channel {
-            voltage: BigEndian::read_u16(&buf[4..=5]),
-            shunt_voltage: BigEndian::read_i16(&buf[6..=7])
+            shunt_voltage: BigEndian::read_i16(&buf[4..=5]),
+            bus_voltage: BigEndian::read_u16(&buf[6..=7])
         },Channel {
-            voltage: BigEndian::read_u16(&buf[8..=9]),
-            shunt_voltage: BigEndian::read_i16(&buf[10..=11])
+            shunt_voltage: BigEndian::read_i16(&buf[8..=9]),
+            bus_voltage: BigEndian::read_u16(&buf[10..=11])
         }])
     }
 
