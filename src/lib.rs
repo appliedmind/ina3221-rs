@@ -1,5 +1,3 @@
-#![no_std]
-
 extern crate byteorder;
 extern crate embedded_hal as hal;
 
@@ -226,9 +224,9 @@ pub struct Channel {
 
 impl Channel {
     /// Convert raw shunt-voltage to a current by scaling with the shunt resistance
-    pub fn current(&self, shunt: f32) -> f32 {
+    pub fn current(&self) -> f32 {
         // 40 uV / LSB, I = V/R
-        ((self.shunt_voltage >> 3) as f32 * 40e-6f32) / shunt
+        ((self.shunt_voltage >> 3) as f32 * 40e-6f32) / 10e-3f32
     }
 
     /// Convert raw bus-voltage
@@ -261,30 +259,19 @@ impl<I2C, E> INA3221<I2C>
 
     /// Read a channel's bus and shunt voltage
     pub fn read_channel(&mut self, index: u8) -> Result<Channel, E> {
-        let mut buf: [u8; 4] = [0x00; 4];
-        self.i2c.write(self.address, &[Register::ShuntVoltage1 as u8 + (index % 3u8)*2u8])?;
-        self.i2c.read(self.address, &mut buf)?;
-        Ok(Channel {
-            shunt_voltage: BigEndian::read_i16(&buf[0..=1]),
-            bus_voltage: BigEndian::read_u16(&buf[2..=3])
-        })
+        let (shunt_voltage, bus_voltage) = match index {
+           1 => (self.read(Register::ShuntVoltage1)? as i16, self.read(Register::BusVoltage1)?),
+           2 => (self.read(Register::ShuntVoltage2)? as i16, self.read(Register::BusVoltage2)?),
+           3 => (self.read(Register::ShuntVoltage3)? as i16, self.read(Register::BusVoltage3)?),
+           _ => (0, 0)
+        };
+
+        Ok(Channel { shunt_voltage, bus_voltage })
     }
 
     /// Read channel 1-3
     pub fn read_all_channels(&mut self) -> Result<[Channel; 3], E> {
-        let mut buf: [u8; 4*3] = [0x00; 4*3];
-        self.i2c.write(self.address, &[Register::ShuntVoltage1 as u8])?;
-        self.i2c.read(self.address, &mut buf)?;
-        Ok([Channel {
-            shunt_voltage: BigEndian::read_i16(&buf[0..=1]),
-            bus_voltage: BigEndian::read_u16(&buf[2..=3])
-        },Channel {
-            shunt_voltage: BigEndian::read_i16(&buf[4..=5]),
-            bus_voltage: BigEndian::read_u16(&buf[6..=7])
-        },Channel {
-            shunt_voltage: BigEndian::read_i16(&buf[8..=9]),
-            bus_voltage: BigEndian::read_u16(&buf[10..=11])
-        }])
+        Ok([self.read_channel(1)?, self.read_channel(2)?, self.read_channel(3)?])
     }
 
     /// Read Shunt-Voltage Sum
