@@ -1,3 +1,5 @@
+#![no_std]
+
 extern crate byteorder;
 extern crate embedded_hal as hal;
 
