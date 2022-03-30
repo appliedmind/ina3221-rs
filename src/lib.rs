@@ -226,9 +226,9 @@ pub struct Channel {
 
 impl Channel {
     /// Convert raw shunt-voltage to a current by scaling with the shunt resistance
-    pub fn current(&self) -> f32 {
+    pub fn current(&self, shunt: f32) -> f32 {
         // 40 uV / LSB, I = V/R
-        ((self.shunt_voltage >> 3) as f32 * 40e-6f32) / 10e-3f32
+        ((self.shunt_voltage >> 3) as f32 * 40e-6f32) / shunt
     }
 
     /// Convert raw bus-voltage
